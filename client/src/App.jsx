@@ -1,56 +1,91 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import "./css/style.css"; // your CSS from before
 
-function App() {
+const topics = [
+  "Describe your favorite meal.",
+  "Talk about your hometown.",
+  "What’s a memorable vacation you’ve taken?",
+  "Describe a person you admire.",
+  "What are your goals for this year?",
+  "If you could learn any skill instantly, what would it be?",
+  "What kind of movies do you enjoy?",
+];
+
+const accentSentences = {
+  english: [
+    "The quick brown fox jumps over the lazy dog.",
+    "She sells seashells by the seashore.",
+    "How much wood would a woodchuck chuck?",
+  ],
+  spanish: [
+    "El perro corre por el parque.",
+    "La vida es bella.",
+    "Me gusta aprender nuevos idiomas.",
+  ],
+  japanese: [
+    "私は毎朝コーヒーを飲みます。",
+    "東京はとても大きいです。",
+    "猫がベッドの上で寝ています。",
+  ],
+};
+
+export default function App() {
+  const [language, setLanguage] = useState("english");
+  const [topic, setTopic] = useState("");
+  const [sentence, setSentence] = useState("");
+
+  const getRandomPrompt = () =>
+    topics[Math.floor(Math.random() * topics.length)];
+
+  const getRandomSentence = (lang) => {
+    const sentences = accentSentences[lang] || accentSentences.english;
+    return sentences[Math.floor(Math.random() * sentences.length)];
+  };
+
+  const generatePrompt = () => {
+    setTopic(getRandomPrompt());
+    setSentence(getRandomSentence(language));
+  };
+
+  useEffect(() => {
+    generatePrompt(); // generate on first load
+  }, [language]);
+
   return (
     <div className="app">
-      {/* Navbar */}
       <nav className="navbar">
-        <h1>LinguaCoach AI</h1>
-        <ul>
-          <li>Home</li>
-          <li>About</li>
-          <li>Contact</li>
-        </ul>
+        <h1>AI Speaking Practice</h1>
       </nav>
 
-      {/* Main */}
       <main className="main-content">
-        <h2>Perfect Your Accent & Grammar with AI</h2>
-        <p>Practice speaking naturally and fluently in any language. Choose a language, start speaking, and receive feedback instantly.</p>
-
-        {/* Language Select */}
-        <select className = "language-select">
-          <option>English</option>
-          <option>Spanish</option>
-          <option>French</option>
-          <option>Japanese</option>
-          <option>Korean</option>
+        <select
+          className="language-select"
+          value={language}
+          onChange={(e) => setLanguage(e.target.value)}
+        >
+          <option value="english">English</option>
+          <option value="spanish">Spanish</option>
+          <option value="japanese">Japanese</option>
         </select>
 
-        {/* Mode Buttons */}
-        <div className="mode-buttons">
-          <button>Grammar Practice</button>
-          <button>Accent Practice</button>
-        </div>
-
-        {/* Prompt Box */}
         <div className="prompt-box">
-          Click a mode to get started!
+          <h2>🗣️ Conversation Topic</h2>
+          <p>{topic}</p>
         </div>
 
-        {/* Mic Button */}
-        <button className="mic-button">🎤</button>
+        <div className="feedback-box">
+          <h2>🎧 Accent Practice</h2>
+          <p>{sentence}</p>
+        </div>
 
-        {/* Feedback Box */}
-        <div className="feedback-box"></div>
+        <button className="btn" onClick={generatePrompt}>
+          🎲 New Prompt
+        </button>
+
+        <button className="mic-button" title="Record your voice">
+          🎤
+        </button>
       </main>
-
-      {/* Footer */}
-      <footer>
-        © 2025 LinguaCoach AI — Prototype UI by Steven, Chris, Gabriel
-      </footer>
     </div>
   );
 }
-
-export default App;
