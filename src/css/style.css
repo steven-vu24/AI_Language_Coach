@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Styles */
+body {
+  @apply bg-gradient-to-br from-indigo-100 via-white to-blue-100 text-gray-800;
+}
