@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from "react";
-import "./css/style.css"; // your CSS from before
+import React, { useState, useEffect, useRef } from "react";
+import { useOpenRouter } from "./hooks/useOpenRouter";
+import { useWebSocketTranscription } from './hooks/transcription';
+import "./css/style.css";
 
 const topics = [
   "Describe your favorite meal.",
@@ -33,6 +35,32 @@ export default function App() {
   const [language, setLanguage] = useState("english");
   const [topic, setTopic] = useState("");
   const [sentence, setSentence] = useState("");
+  const [feedback, setFeedback] = useState("");
+  const [recordedText, setRecordedText] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+
+  const { sendMessage, loading, error } = useOpenRouter();
+  const { 
+    startTranscription,
+    stopTranscription,
+    clearTranscript,
+    isConnected,
+    transcript,
+    interimTranscript,
+    error: transcriptionerror
+  } = useWebSocketTranscription();
+
+  useEffect(() => {
+    if (interimTranscript) {
+      console.log('🔄 Interim transcript:', interimTranscript);
+    }
+  }, [interimTranscript]);
+
+  const recordingTimerRef = useRef(null);
+  const countdownTimerRef = useRef(null);
+
+  const RECORDING_DURATION = 10;
 
   const getRandomPrompt = () =>
     topics[Math.floor(Math.random() * topics.length)];
@@ -43,12 +71,128 @@ export default function App() {
   };
 
   const generatePrompt = () => {
-    setTopic(getRandomPrompt());
+    setTopic(getRandomPrompt());  
     setSentence(getRandomSentence(language));
   };
 
+  const getLanguageCode = (lang) => {
+    const codes = {
+      english: 'en',
+      spanish: 'es',
+      japanese: 'ja'
+    };
+    return codes[lang] || 'en';
+  };
+
+  const handleMicClick = async () => {
+    if (isRecording) {
+      await stopRecordingAndProcess();
+    } else {
+      await startRecording();
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      console.log('🎤 Starting recording...');
+      setIsRecording(true);
+      setCountdown(RECORDING_DURATION);
+      setRecordedText("");
+      setFeedback("");
+
+      const languageCode = getLanguageCode(language);
+      await startTranscription(languageCode);
+
+      // Start countdown
+      countdownTimerRef.current = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(countdownTimerRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      // Auto-stop after duration
+      recordingTimerRef.current = setTimeout(async () => {
+        await stopRecordingAndProcess();
+      }, RECORDING_DURATION * 1000);
+
+    } catch (err) {
+      console.error('Error starting recording:', err);
+      setIsRecording(false);
+    }
+  };
+
+  const stopRecordingAndProcess = async () => {
+    console.log('⏹️ Stopping recording...');
+    
+    // Clear timers
+    if (recordingTimerRef.current) {
+      clearTimeout(recordingTimerRef.current);
+    }
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+    }
+
+    // Stop transcription
+    stopTranscription();
+    setIsRecording(false);
+    setCountdown(0);
+
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const finalTranscript = transcript.trim();
+    setRecordedText(finalTranscript);
+    
+    console.log('📝 Recorded text:', finalTranscript);
+
+    // Get AI feedback if we have text
+    if (finalTranscript) {
+      try {
+        console.log('🤖 Getting AI feedback...');
+        const aiResponse = await sendMessage(
+          `You are a ${language} language teacher. 
+          
+          The student said: "${finalTranscript}"
+          Language: ${language}
+
+          Provide helpful feedback on:
+          1. Grammar (if any errors)
+          2. Clarity and fluency
+          3. One specific tip to improve
+
+          Keep it encouraging and concise!`
+        );
+        
+        console.log('✅ AI feedback received');
+        setFeedback(aiResponse);
+      } catch (err) {
+        console.error('Error getting feedback:', err);
+        setFeedback('Failed to get AI feedback. Please try again.');
+      }
+    } else {
+      setFeedback('No speech detected. Please try again and speak clearly.');
+    }
+  };
+
   useEffect(() => {
-    generatePrompt(); // generate on first load
+    return () => {
+      if (recordingTimerRef.current) {
+        clearTimeout(recordingTimerRef.current);
+      }
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+      }
+      if (isConnected) {
+        stopTranscription();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    generatePrompt();
   }, [language]);
 
   return (
@@ -82,8 +226,12 @@ export default function App() {
           🎲 New Prompt
         </button>
 
-        <button className="mic-button" title="Record your voice">
-          🎤
+        <button 
+          className="mic-button" 
+          onClick={handleMicClick}
+          disabled={loading}
+        >
+          {loading ? "⏳" : "🎤"}
         </button>
       </main>
     </div>
