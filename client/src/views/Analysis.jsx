@@ -165,11 +165,50 @@ Keep it encouraging and concise!`
       });
   };
 
-  const handlePlayPerfectAudio = () => {
+  const handlePlayPerfectAudio = async () => {
     setIsPlayingPerfect(true);
-    // TODO: Implement TTS for perfect pronunciation
-    setTimeout(() => setIsPlayingPerfect(false), 2000);
+    try {
+      console.log('🎵 Generating TTS for:', sentence || recordedText);
+
+      const response = await fetch('http://localhost:5001/api/openrouter/generate-tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: sentence || recordedText,
+          language: language
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'TTS generation failed');
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+
+      console.log('✅ Playing TTS audio...');
+      audio.onended = () => {
+        setIsPlayingPerfect(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+
+      audio.onerror = (e) => {
+        console.error('TTS playback error:', e);
+        setIsPlayingPerfect(false);
+        alert('Failed to play pronunciation audio');
+      };
+
+      await audio.play();
+
+    } catch (error) {
+      console.error('❌ Error generating TTS:', error);
+      alert(`Failed to generate pronunciation: ${error.message}`);
+      setIsPlayingPerfect(false);
+    }
   };
+
 
   const regenerateFeedback = async () => {
     if (!recordedText) {
@@ -185,16 +224,16 @@ Keep it encouraging and concise!`
       const aiResponse = await sendMessage(
         `You are a ${language} language teacher. 
         
-The student said: "${recordedText}"
-Expected phrase: "${sentence || 'N/A'}"
-Language: ${language}
+  The student said: "${recordedText}"
+  Expected phrase: "${sentence || 'N/A'}"
+  Language: ${language}
 
-Provide helpful feedback on:
-1. Grammar (if any errors)
-2. Clarity and fluency
-3. One specific tip to improve
+  Provide helpful feedback on:
+  1. Grammar (if any errors)
+  2. Clarity and fluency
+  3. One specific tip to improve
 
-Keep it encouraging and concise!`
+  Keep it encouraging and concise!`
       );
       
       console.log('✅ New feedback received');
@@ -208,6 +247,7 @@ Keep it encouraging and concise!`
       setIsLoadingFeedback(false);
     }
   };
+
 
   // ✅ Download audio function
   const handleDownloadAudio = () => {
@@ -246,7 +286,7 @@ Keep it encouraging and concise!`
         <div className="prompt-box" style={{ width: '500px' }}>
           <h2>Your Phrase</h2>
           <p style={{ fontSize: '1.1rem', lineHeight: '1.6' }}>
-            {recordedText ? `"${recordedText}"` : "No recording found. Please record something first."}
+            {recordedText || "No recording found. Please record something first."}
           </p>
         </div>
 
