@@ -26,10 +26,42 @@ export default function Analysis() {
     setTimeout(() => setIsPlayingUser(false), 2000);
   };
 
-  const handlePlayPerfectAudio = () => {
+  const handlePlayPerfectAudio = async () => {
+    if (!recordedText) return;
+    
     setIsPlayingPerfect(true);
-    // TODO: Implement actual audio playback
-    setTimeout(() => setIsPlayingPerfect(false), 2000);
+    
+    try {
+      // Call your backend endpoint to generate TTS
+      const response = await fetch('/api/generate-tts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: recordedText,
+          language: language
+        })
+      });
+      
+      if (!response.ok) throw new Error('TTS generation failed');
+      
+      // Get the audio blob and play it
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      
+      audio.onended = () => {
+        setIsPlayingPerfect(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+      
+      await audio.play();
+    } catch (error) {
+      console.error('Error playing perfect audio:', error);
+      setIsPlayingPerfect(false);
+      alert('Failed to generate perfect pronunciation');
+    }
   };
 
   return (

@@ -5,6 +5,7 @@ import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import openRouterRoutes from "./routes/openRouter.js";
 import { setupWebSocket } from "./websocket.js";
+import apiRoutes from './routes/openRouter.js';
 
 dotenv.config();
 
@@ -12,6 +13,7 @@ const app = express();
 const HTTP_PORT = 5001;
 const WS_PORT = 5002;
 
+app.use('/api', apiRoutes);
 app.use(cors());
 app.use(express.json());
 app.use("/api/openrouter", openRouterRoutes);
