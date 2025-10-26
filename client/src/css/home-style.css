@@ -1,0 +1,352 @@
+:root {
+  /* Gradient theme variables */
+  --grad-start: #7c3aed; /* purple */
+  --grad-mid: #06b6d4;   /* teal */
+  --grad-end: #60a5fa;   /* light blue */
+  --surface-glass: rgba(255,255,255,0.08);
+  --surface-solid: rgba(255,255,255,0.9);
+  --text-on-dark: #ffffff;
+  --text-on-light: #0f172a;
+  --muted: rgba(15,23,42,0.65);
+}
+
+/* Page baseline */
+body, html, #root, .app {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(135deg, var(--grad-start) 0%, var(--grad-mid) 45%, var(--grad-end) 100%);
+  color: var(--text-on-dark);
+  min-height: 100vh;
+}
+
+/* Navigation */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background: linear-gradient(90deg, rgba(0,0,0,0.12), rgba(255,255,255,0.04));
+  color: var(--text-on-dark);
+  box-shadow: 0 6px 20px rgba(2,6,23,0.2);
+  backdrop-filter: blur(6px);
+}
+
+.navbar h1 { margin: 0; color: var(--text-on-dark); }
+
+.navbar ul {
+  display: flex;
+  list-style: none;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+}
+
+/* Main area */
+.main-content {
+  text-align: center;
+  padding: 2.5rem 1rem;
+}
+
+/* Buttons with gradient */
+.mode-buttons button,
+.btn {
+  margin: 0.5rem;
+  padding: 0.6rem 1.1rem;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  color: var(--text-on-dark);
+  background: linear-gradient(90deg, var(--grad-start), var(--grad-mid));
+  box-shadow: 0 6px 18px rgba(12,18,38,0.18);
+  transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+}
+
+.mode-buttons button:hover,
+.btn:hover {
+  transform: translateY(-3px);
+  filter: brightness(1.05);
+}
+
+.mode-buttons button.secondary {
+  background: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+  color: var(--text-on-dark);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Card / boxes: glass look to blend with gradient */
+.prompt-box, .feedback-box, .card {
+  margin: 1rem auto;
+  padding: 1rem;
+  width: 320px;
+  max-width: calc(100% - 2rem);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 8px 30px rgba(2,6,23,0.22);
+  color: var(--text-on-dark);
+  backdrop-filter: blur(6px) saturate(120%);
+}
+
+.prompt-box h2, .feedback-box h2 {
+  margin-top: 0;
+  color: var(--text-on-dark);
+}
+
+/* Microphone button — circular gradient */
+.mic-button {
+  font-size: 1.6rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 50%;
+  margin: 1rem;
+  background: linear-gradient(135deg, var(--grad-mid), var(--grad-end));
+  color: var(--text-on-dark);
+  border: none;
+  box-shadow: 0 8px 20px rgba(12,18,38,0.2);
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.mic-button:hover {
+  transform: scale(1.06);
+  box-shadow: 0 12px 30px rgba(12,18,38,0.28);
+}
+
+/* Language selector with gradient glass styling */
+.language-select {
+  padding: 0.75rem 1.5rem;
+  padding-right: 2.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+  backdrop-filter: blur(8px);
+  color: var(--text-on-dark);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(2,6,23,0.15);
+  transition: all 160ms ease;
+  margin: 1.5rem 0;
+  appearance: none;
+  background-image: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)),
+                    url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: center right 0.75rem;
+  background-size: auto, 1.2rem;
+}
+
+.language-select:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(2,6,23,0.22);
+  border-color: rgba(255,255,255,0.18);
+  background: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.08));
+}
+
+.language-select:focus {
+  outline: none;
+  border-color: rgba(255,255,255,0.25);
+  box-shadow: 0 8px 25px rgba(2,6,23,0.22), 0 0 0 3px rgba(255,255,255,0.1);
+}
+
+.language-select option {
+  background: rgba(15,23,42,0.95);
+  color: var(--text-on-dark);
+  padding: 0.5rem;
+}
+
+.navbar-right {
+  margin-left: auto;
+}
+
+.about-link {
+  color: var(--text-on-dark);
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
+}
+
+.about-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+/* Add these styles to your home-style.css file */
+
+/* About page sections */
+.about-section {
+  margin: 2rem auto;
+  padding: 2rem;
+  width: 600px;
+  max-width: calc(100% - 2rem);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 8px 30px rgba(2,6,23,0.22);
+  color: var(--text-on-dark);
+  backdrop-filter: blur(6px) saturate(120%);
+  text-align: left;
+}
+
+.about-section h2 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--text-on-dark);
+  font-size: 1.5rem;
+}
+
+.about-section p {
+  line-height: 1.8;
+  font-size: 1.05rem;
+  color: var(--text-on-dark);
+  opacity: 0.95;
+  margin: 0;
+}
+
+/* Contact email list */
+.contact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.contact-email {
+  color: var(--text-on-dark);
+  text-decoration: none;
+  font-size: 1.05rem;
+  padding: 0.8rem 1.2rem;
+  background: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  display: inline-block;
+}
+
+.contact-email:hover {
+  background: linear-gradient(90deg, rgba(255,255,255,0.12), rgba(255,255,255,0.08));
+  border-color: rgba(255,255,255,0.15);
+  transform: translateX(5px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .about-section {
+    width: 90%;
+    padding: 1.5rem;
+  }
+}
+
+
+/* Utility: muted text on light surfaces */
+.muted { color: var(--muted); }
+
+/* Small responsive tweaks */
+@media (min-width: 768px) {
+  .prompt-box, .feedback-box {
+    width: 420px;
+  }
+}
+
+/* Utility: muted text on light surfaces */
+.muted { color: var(--muted); }
+
+/* Add these styles to your home-style.css file */
+
+/* Transcription box that appears when recording */
+.transcription-box {
+  margin: 1.5rem auto;
+  padding: 1.5rem;
+  width: 420px;
+  max-width: calc(100% - 2rem);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+  border: 2px solid rgba(255,255,255,0.15);
+  box-shadow: 0 8px 30px rgba(2,6,23,0.22);
+  color: var(--text-on-dark);
+  backdrop-filter: blur(8px) saturate(120%);
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Slide-in animation for transcription box */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.transcription-box h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--text-on-dark);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Pulsing red indicator when recording */
+.recording-indicator {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background: #ef4444;
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+}
+
+/* Text area for transcription */
+.transcription-text {
+  min-height: 80px;
+  padding: 1rem;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-on-dark);
+  font-size: 1rem;
+  line-height: 1.6;
+  text-align: left;
+}
+
+.transcription-text.empty {
+  color: rgba(255,255,255,0.5);
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mic button changes to red when recording */
+.mic-button.recording {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  animation: pulseButton 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseButton {
+  0%, 100% {
+    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 8px 30px rgba(239, 68, 68, 0.6);
+  }
+}
+
+
+
+
+
