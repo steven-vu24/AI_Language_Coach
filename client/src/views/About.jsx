@@ -9,7 +9,7 @@ export default function About() {
           <h1>Lingua Coach AI</h1>
         </div>
         <div className="navbar-right">
-          <a href="/" className="about-link">← Back to Home</a>
+          <a href="/home" className="about-link">← Back to Home</a>
         </div>
       </nav>
 

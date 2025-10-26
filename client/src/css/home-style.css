@@ -460,6 +460,20 @@ body, html, #root, .app {
   width: 100%;
 }
 
+.language-select option {
+  background-color: #1e293b !important;
+  background: #1e293b !important;
+  color: #ffffff !important;
+  padding: 0.75rem;
+  font-weight: 500;
+}
+
+.language-select optgroup {
+  background-color: #1e293b !important;
+  background: #1e293b !important;
+  color: #ffffff !important;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .about-section {
