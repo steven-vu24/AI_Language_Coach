@@ -1,246 +1,167 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useOpenRouter } from "../hooks/useOpenRouter";
 import "../css/home-style.css";
 
 export default function Analysis() {
   const [isPlayingUser, setIsPlayingUser] = useState(false);
-  const [isPlayingPerfect, setIsPlayingPerfect] = useState(false);
-  const [recordedText, setRecordedText] = useState("");
-  const [language, setLanguage] = useState("english");
-  const [feedback, setFeedback] = useState("");
-  const [sentence, setSentence] = useState("");
-  const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
-  const [audioUrl, setAudioUrl] = useState(null);
+    const [isPlayingPerfect, setIsPlayingPerfect] = useState(false);
+    const [recordedText, setRecordedText] = useState("");
+    const [language, setLanguage] = useState("english");
+    const [feedback, setFeedback] = useState("");
+    const [sentence, setSentence] = useState("");
+    const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
+    const [audioUrl, setAudioUrl] = useState(null);
+  
+    const [selectedVoice, setSelectedVoice] = useState("voice1"); // 🔹 NEW
+    const { sendMessage, loading, error } = useOpenRouter();
 
-  const audioRef = useRef(null);
-  const { sendMessage, loading, error } = useOpenRouter();
+  // 🔹 Example voice options (replace IDs with your real ones)
+  const voices = [
+    { id: "5196af35f6ff4a0dbf541793fc9f2157", name: "Donald Trump", value: "voice1" },
+    { id: "14b139d922314a748a791a73f51a5111", name: "Chinese Accent", value: "voice2" },
+    { id: "8e468a7c906648e3bb4cb7c08185b14a", name: "Indian Accent", value: "voice3" },
+    { id: "03397b4c4be74759b72533b663fbd001", name: "Elon", value: "voice4" },
+    { id: "a5971a1fd805441aaf3b0bbe8c9f1ab6", name: "Dexter Morgan", value: "voice5" },
+    { id: "2b14512a5bd54e809bb159aef7f5f614", name: "The Rock", value: "voice6" },
+    { id: "54e3a85ac9594ffa83264b8a494b901b", name: "Spongebob", value: "voice7" },
+    { id: "d34183dcf4a041f5a82aa3dd19644329", name: "Naruto", value: "voice8" },
+    { id: "a98724d565bd4a80947f47c7994d18f0", name: "Kanye West", value: "voice9" },
+    { id: "abb3ca44111b405fb90a7eb5157ad656", name: "Drake", value: "voice10" },
+  
+  ];
 
   useEffect(() => {
-  const loadDataAndGenerateFeedback = async () => {
-    const savedText = sessionStorage.getItem('recordedText');
-    const savedLanguage = sessionStorage.getItem('selectedLanguage');
-    const savedSentence = sessionStorage.getItem('sentence');
-    const savedFeedback = sessionStorage.getItem('feedback');
-    const savedAudio = sessionStorage.getItem('audioRecording');
-
-    console.log('📥 Loading session data:', {
-      recordedText: savedText,
-      language: savedLanguage,
-      sentence: savedSentence,
-      hasFeedback: !!savedFeedback,
-      hasAudio: !!savedAudio,
-      audioSize: savedAudio ? savedAudio.length : 0
-    });
-
-    if (savedText) setRecordedText(savedText);
-    if (savedLanguage) setLanguage(savedLanguage);
-    if (savedSentence) setSentence(savedSentence);
-
-    if (savedAudio) {
-      setAudioUrl(savedAudio);
-      console.log('✅ Audio loaded from sessionStorage');
-      console.log('   Format:', savedAudio.substring(0, 30));
-    } else {
-      console.warn('⚠️ No audio found in sessionStorage');
-    }
-
-    if (savedFeedback) {
-      console.log('✅ Using cached feedback');
-      setFeedback(savedFeedback);
-      return;
-    }
-
-      if (savedText && !savedFeedback) {
-        console.log('🤖 Generating new AI feedback...');
-        setIsLoadingFeedback(true);
-
-        try {
-          const aiResponse = await sendMessage(
-            `You are a ${savedLanguage || 'english'} language teacher. 
-            
-            The student said: "${savedText}"
-            Expected phrase: "${savedSentence || 'N/A'}"
-            Language: ${savedLanguage || 'english'}
-
-            Provide helpful feedback on:
-            1. Grammar (if any errors)
-            2. Clarity and fluency
-            3. One specific tip to improve
-
-            Keep it encouraging and concise!`
-          );
-          
-          console.log('✅ AI feedback received');
-          setFeedback(aiResponse);
-          sessionStorage.setItem('feedback', aiResponse);
-          
-        } catch (err) {
-          console.error('❌ Error getting feedback:', err);
-          const errorMessage = 'Failed to get AI feedback. Please try again.';
-          setFeedback(errorMessage);
-          sessionStorage.setItem('feedback', errorMessage);
-        } finally {
-          setIsLoadingFeedback(false);
-        }
-      } else if (!savedText) {
-        const noDataMessage = 'No speech detected. Please record something first.';
-        setFeedback(noDataMessage);
-      }
-    };
-
-    loadDataAndGenerateFeedback();
-  }, []); 
-
-  // Retrieve the recorded text from sessionStorage when component mounts
-  useEffect(() => {
-    const savedText = sessionStorage.getItem('recordedText');
-    const savedLanguage = sessionStorage.getItem('selectedLanguage');
-    
-    if (savedText) {
-      setRecordedText(savedText);
-    }
-    if (savedLanguage) {
-      setLanguage(savedLanguage);
-    }
-  }, []);
-
-  // Retrieve the recorded text from sessionStorage when component mounts
-  useEffect(() => {
-    const savedText = sessionStorage.getItem('recordedText');
-    const savedLanguage = sessionStorage.getItem('selectedLanguage');
-    
-    if (savedText) {
-      setRecordedText(savedText);
-    }
-    if (savedLanguage) {
-      setLanguage(savedLanguage);
-    }
-  }, []);
-
-  // ✅ FIXED: Play user audio
-  const handlePlayUserAudio = () => {
-    console.log('🎵 Attempting to play audio...');
-    console.log('   audioUrl exists:', !!audioUrl);
-    console.log('   audioUrl type:', typeof audioUrl);
-    
-    if (!audioUrl) {
-      console.error('❌ No audio URL available');
-      alert('No audio recording available. Please record something first.');
-      return;
-    }
-
-    // ✅ Stop any currently playing audio
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      audioRef.current = null;
-    }
-
-    setIsPlayingUser(true);
-
-    // ✅ Create new audio element
-    const audio = new Audio(audioUrl);
-    audioRef.current = audio;
-
-    // ✅ Set up event handlers
-    audio.onloadeddata = () => {
-      console.log('✅ Audio data loaded');
-      console.log('   Duration:', audio.duration, 'seconds');
-    };
-
-    audio.onended = () => {
-      console.log('✅ Playback finished');
-      setIsPlayingUser(false);
-    };
-
-    audio.onerror = (e) => {
-      console.error('❌ Audio playback error:', e);
-      console.error('   Error code:', audio.error?.code);
-      console.error('   Error message:', audio.error?.message);
-      setIsPlayingUser(false);
-      
-      let errorMsg = 'Error playing audio. ';
-      switch (audio.error?.code) {
-        case 1:
-          errorMsg += 'The audio loading was aborted.';
-          break;
-        case 2:
-          errorMsg += 'A network error occurred.';
-          break;
-        case 3:
-          errorMsg += 'The audio format is not supported.';
-          break;
-        case 4:
-          errorMsg += 'The audio source is not available.';
-          break;
-        default:
-          errorMsg += 'Unknown error occurred.';
-      }
-      alert(errorMsg);
-    };
-
-    // ✅ Play audio
-    audio.play()
-      .then(() => {
-        console.log('▶️ Playback started successfully');
-      })
-      .catch(err => {
-        console.error('❌ Play failed:', err);
-        setIsPlayingUser(false);
-        alert('Failed to play audio: ' + err.message);
+    const loadDataAndGenerateFeedback = async () => {
+      const savedText = sessionStorage.getItem('recordedText');
+      const savedLanguage = sessionStorage.getItem('selectedLanguage');
+      const savedSentence = sessionStorage.getItem('sentence');
+      const savedFeedback = sessionStorage.getItem('feedback');
+      const savedAudio = sessionStorage.getItem('audioRecording');
+  
+      console.log('📥 Loading session data:', {
+        recordedText: savedText,
+        language: savedLanguage,
+        sentence: savedSentence,
+        hasFeedback: !!savedFeedback,
+        hasAudio: !!savedAudio,
+        audioSize: savedAudio ? savedAudio.length : 0
       });
+  
+      if (savedText) setRecordedText(savedText);
+      if (savedLanguage) setLanguage(savedLanguage);
+      if (savedSentence) setSentence(savedSentence);
+  
+      if (savedAudio) {
+        setAudioUrl(savedAudio);
+        console.log('✅ Audio loaded from sessionStorage');
+        console.log('   Format:', savedAudio.substring(0, 30));
+      } else {
+        console.warn('⚠️ No audio found in sessionStorage');
+      }
+  
+      if (savedFeedback) {
+        console.log('✅ Using cached feedback');
+        setFeedback(savedFeedback);
+        return;
+      }
+  
+        if (savedText && !savedFeedback) {
+          console.log('🤖 Generating new AI feedback...');
+          setIsLoadingFeedback(true);
+  
+          try {
+            const aiResponse = await sendMessage(
+              `You are a ${savedLanguage || 'english'} language teacher. 
+              
+              The student said: "${savedText}"
+              Expected phrase: "${savedSentence || 'N/A'}"
+              Language: ${savedLanguage || 'english'}
+  
+              Provide helpful feedback on:
+              1. Grammar (if any errors)
+              2. Clarity and fluency
+              3. One specific tip to improve
+  
+              Keep it encouraging and concise!`
+            );
+            
+            console.log('✅ AI feedback received');
+            setFeedback(aiResponse);
+            sessionStorage.setItem('feedback', aiResponse);
+            
+          } catch (err) {
+            console.error('❌ Error getting feedback:', err);
+            const errorMessage = 'Failed to get AI feedback. Please try again.';
+            setFeedback(errorMessage);
+            sessionStorage.setItem('feedback', errorMessage);
+          } finally {
+            setIsLoadingFeedback(false);
+          }
+        } else if (!savedText) {
+          const noDataMessage = 'No speech detected. Please record something first.';
+          setFeedback(noDataMessage);
+        }
+      };
+  
+      loadDataAndGenerateFeedback();
+    }, []); 
+
+  // Retrieve the recorded text from sessionStorage when component mounts
+  useEffect(() => {
+    const savedText = sessionStorage.getItem('recordedText');
+    const savedLanguage = sessionStorage.getItem('selectedLanguage');
+    
+    if (savedText) {
+      setRecordedText(savedText);
+    }
+    if (savedLanguage) {
+      setLanguage(savedLanguage);
+    }
+  }, []);
+
+  const handlePlayUserAudio = () => {
+    setIsPlayingUser(true);
+    setTimeout(() => setIsPlayingUser(false), 2000);
   };
 
   const handlePlayPerfectAudio = async () => {
     if (!recordedText) return;
-    
+
     setIsPlayingPerfect(true);
-    
     try {
-      console.log('🎵 Generating TTS for:', recordedText);
-      
-      // Call backend to generate TTS - UPDATED URL
-      const response = await fetch('http://localhost:5001/api/openrouter/generate-tts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      console.log("🎵 Generating TTS for:", recordedText);
+      console.log("🎤 Voice selected:", selectedVoice);
+
+      // Find selected voice ID
+      const voiceObj = voices.find((v) => v.value === selectedVoice);
+
+      const response = await fetch("http://localhost:5001/api/openrouter/generate-tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           text: recordedText,
-          language: language
-        })
+          language: language,
+          reference_id: voiceObj.id, // 🔹 Send chosen voice ID
+        }),
       });
-      
-      console.log('Response status:', response.status);
-      
+
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'TTS generation failed');
+        throw new Error(errorData.error || "TTS generation failed");
       }
-      
-      // Get audio blob and create URL
+
       const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
-      
-      console.log('✅ Playing audio...');
-      
+
       audio.onended = () => {
-        console.log('Audio finished playing');
         setIsPlayingPerfect(false);
         URL.revokeObjectURL(audioUrl);
       };
-      
-      audio.onerror = (e) => {
-        console.error('Audio playback error:', e);
-        setIsPlayingPerfect(false);
-        alert('Failed to play audio');
-      };
-      
+
       await audio.play();
-      
     } catch (error) {
-      console.error('Error with perfect audio:', error);
+      console.error("Error with perfect audio:", error);
       setIsPlayingPerfect(false);
       alert(`Failed to generate pronunciation: ${error.message}`);
     }
@@ -314,14 +235,14 @@ export default function Analysis() {
       </nav>
 
       <main className="main-content">
-        <h2 style={{ color: 'var(--text-on-dark)', marginBottom: '2rem' }}>
+        <h2 style={{ color: "var(--text-on-dark)", marginBottom: "2rem" }}>
           📊 Performance Analysis
         </h2>
 
         {/* Phrase Display Box */}
-        <div className="prompt-box" style={{ width: '500px' }}>
+        <div className="prompt-box" style={{ width: "500px" }}>
           <h2>Your Phrase</h2>
-          <p style={{ fontSize: '1.1rem', lineHeight: '1.6' }}>
+          <p style={{ fontSize: "1.1rem", lineHeight: "1.6" }}>
             {recordedText || "No recording found. Please record something first."}
           </p>
         </div>
@@ -334,6 +255,25 @@ export default function Analysis() {
             <span className="score-percent">%</span>
           </div>
           <p className="score-label">Great job! Keep practicing!</p>
+        </div>
+
+        {/* 🔹 Voice Selection Dropdown (Themed) */}
+        <div className="voice-select-container">
+          <label htmlFor="voiceSelect" className="voice-label">
+            🎙️ Choose Voice:
+          </label>
+          <select
+            id="voiceSelect"
+            value={selectedVoice}
+            onChange={(e) => setSelectedVoice(e.target.value)}
+            className="voice-dropdown"
+          >
+            {voices.map((voice) => (
+              <option key={voice.value} value={voice.value}>
+                {voice.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Audio Playback Buttons */}

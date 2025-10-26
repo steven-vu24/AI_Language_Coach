@@ -474,6 +474,50 @@ body, html, #root, .app {
   color: #ffffff !important;
 }
 
+/* 🎙️ Voice Selection Dropdown Styles */
+.voice-select-container {
+  margin: 1.5rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.voice-label {
+  color: var(--text-on-dark);
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.voice-dropdown {
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid #444;
+  background-color: #1c1c1c;
+  color: #f0f0f0;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+
+.voice-dropdown:hover {
+  border-color: #7a5af5;
+  box-shadow: 0 0 12px rgba(122, 90, 245, 0.4);
+}
+
+.voice-dropdown:focus {
+  outline: none;
+  border-color: #a88bff;
+  box-shadow: 0 0 16px rgba(168, 139, 255, 0.5);
+}
+
+.voice-dropdown option {
+  background-color: #1c1c1c;
+  color: #f0f0f0;
+}
+
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .about-section {

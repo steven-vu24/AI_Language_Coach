@@ -76,7 +76,7 @@ router.post('/generate-tts', async (req, res) => {
       body: JSON.stringify({
         text: text,
         format: 'mp3',
-        reference_id: '5196af35f6ff4a0dbf541793fc9f2157',  
+        reference_id: req.body.reference_id || '14b139d922314a748a791a73f51a5111',
 
       })
     });
