@@ -156,6 +156,23 @@ body, html, #root, .app {
   padding: 0.5rem;
 }
 
+.navbar-right {
+  margin-left: auto;
+}
+
+.about-link {
+  color: var(--text-on-dark);
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
+}
+
+.about-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+
 /* Utility: muted text on light surfaces */
 .muted { color: var(--muted); }
 
@@ -168,4 +185,103 @@ body, html, #root, .app {
 
 /* Utility: muted text on light surfaces */
 .muted { color: var(--muted); }
+
+/* Add these styles to your home-style.css file */
+
+/* Transcription box that appears when recording */
+.transcription-box {
+  margin: 1.5rem auto;
+  padding: 1.5rem;
+  width: 420px;
+  max-width: calc(100% - 2rem);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+  border: 2px solid rgba(255,255,255,0.15);
+  box-shadow: 0 8px 30px rgba(2,6,23,0.22);
+  color: var(--text-on-dark);
+  backdrop-filter: blur(8px) saturate(120%);
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Slide-in animation for transcription box */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.transcription-box h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--text-on-dark);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Pulsing red indicator when recording */
+.recording-indicator {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background: #ef4444;
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+}
+
+/* Text area for transcription */
+.transcription-text {
+  min-height: 80px;
+  padding: 1rem;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-on-dark);
+  font-size: 1rem;
+  line-height: 1.6;
+  text-align: left;
+}
+
+.transcription-text.empty {
+  color: rgba(255,255,255,0.5);
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mic button changes to red when recording */
+.mic-button.recording {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  animation: pulseButton 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseButton {
+  0%, 100% {
+    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 8px 30px rgba(239, 68, 68, 0.6);
+  }
+}
+
+
+
+
 
