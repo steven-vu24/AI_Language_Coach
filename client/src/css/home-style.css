@@ -54,7 +54,7 @@ body, html, #root, .app {
 .mode-buttons button,
 .btn {
   margin: 0.5rem;
-  padding: 0.6rem 1.1rem;
+  padding: 0.9rem 1.6rem;
   border-radius: 999px;
   border: none;
   cursor: pointer;
@@ -62,6 +62,8 @@ body, html, #root, .app {
   background: linear-gradient(90deg, var(--grad-start), var(--grad-mid));
   box-shadow: 0 6px 18px rgba(12,18,38,0.18);
   transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+  font-size: 1.1rem;
+  font-weight: 600;
 }
 
 .mode-buttons button:hover,
@@ -74,6 +76,85 @@ body, html, #root, .app {
   background: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
   color: var(--text-on-dark);
   border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Mode Container - holds both mode boxes */
+.mode-container {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 2rem 0;
+}
+
+/* Mode boxes - now selectable buttons */
+.mode-box {
+  padding: 1.5rem;
+  width: 320px;
+  max-width: calc(100% - 2rem);
+  border-radius: 14px;
+  border: 2px solid rgba(255,255,255,0.15);
+  box-shadow: 0 8px 30px rgba(2,6,23,0.22);
+  color: var(--text-on-dark);
+  backdrop-filter: blur(6px) saturate(120%);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  font-family: inherit;
+  text-align: center;
+}
+
+.mode-box h2 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: var(--text-on-dark);
+  font-size: 1.2rem;
+}
+
+.mode-box p {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+.mode-instruction {
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0.8;
+  margin: 0.3rem 0 0.5rem 0 !important;
+  font-style: italic;
+}
+
+.mode-indicator {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+/* Active mode state */
+.mode-box.active {
+  background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+  border-color: rgba(255,255,255,0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(2,6,23,0.3);
+}
+
+.mode-box.active:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 14px 45px rgba(2,6,23,0.35);
+}
+
+/* Inactive mode state */
+.mode-box.inactive {
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+  border-color: rgba(255,255,255,0.08);
+  opacity: 0.7;
+}
+
+.mode-box.inactive:hover {
+  opacity: 0.85;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 35px rgba(2,6,23,0.25);
 }
 
 /* Card / boxes: glass look to blend with gradient */
@@ -97,10 +178,10 @@ body, html, #root, .app {
 
 /* Microphone button — circular gradient */
 .mic-button {
-  font-size: 1.6rem;
-  padding: 0.6rem 0.75rem;
+  font-size: 2.2rem;
+  padding: 1rem 1.2rem;
   border-radius: 50%;
-  margin: 1rem;
+  margin: 1.5rem;
   background: linear-gradient(135deg, var(--grad-mid), var(--grad-end));
   color: var(--text-on-dark);
   border: none;
@@ -110,8 +191,41 @@ body, html, #root, .app {
 }
 
 .mic-button:hover {
-  transform: scale(1.06);
+  transform: scale(1.08);
   box-shadow: 0 12px 30px rgba(12,18,38,0.28);
+}
+
+/* Mic button changes to red when recording */
+.mic-button.recording {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  animation: pulseButton 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseButton {
+  0%, 100% {
+    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 8px 30px rgba(239, 68, 68, 0.6);
+  }
+}
+
+/* Disabled mic button */
+.mic-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mic-button.disabled:hover {
+  transform: none;
+  box-shadow: 0 8px 20px rgba(12,18,38,0.2);
+}
+
+/* Warning text when no mode selected */
+.warning-text {
+  color: rgba(255,255,255,0.9);
+  font-size: 0.95rem;
+  margin-top: 0.5rem;
 }
 
 /* Language selector with gradient glass styling */
@@ -119,45 +233,63 @@ body, html, #root, .app {
   padding: 0.75rem 1.5rem;
   padding-right: 2.5rem;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
-  backdrop-filter: blur(8px);
+  border: 2px solid rgba(255,255,255,0.2);
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08));
+  backdrop-filter: blur(10px) saturate(130%);
   color: var(--text-on-dark);
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 6px 20px rgba(2,6,23,0.15);
-  transition: all 160ms ease;
+  box-shadow: 0 8px 25px rgba(2,6,23,0.25);
+  transition: all 200ms ease;
   margin: 1.5rem 0;
   appearance: none;
-  background-image: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)),
-                    url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-image: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08)),
+                    url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: center right 0.75rem;
   background-size: auto, 1.2rem;
 }
 
 .language-select:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(2,6,23,0.22);
-  border-color: rgba(255,255,255,0.18);
-  background: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.08));
+  transform: translateY(-3px);
+  box-shadow: 0 10px 35px rgba(2,6,23,0.35);
+  border-color: rgba(255,255,255,0.3);
+  background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.12));
+  filter: brightness(1.05);
 }
 
 .language-select:focus {
   outline: none;
-  border-color: rgba(255,255,255,0.25);
-  box-shadow: 0 8px 25px rgba(2,6,23,0.22), 0 0 0 3px rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.4);
+  box-shadow: 0 10px 35px rgba(2,6,23,0.35), 0 0 0 3px rgba(255,255,255,0.15);
+  background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.12));
 }
 
 .language-select option {
-  background: rgba(15,23,42,0.95);
+  background: linear-gradient(135deg, #7c3aed, #06b6d4, #60a5fa);
   color: var(--text-on-dark);
-  padding: 0.5rem;
+  padding: 0.75rem;
+  font-weight: 500;
+  border: none;
+}
+
+.language-select option:hover {
+  background: linear-gradient(135deg, #8b5cf6, #14b8a6, #60a5fa);
+  color: #ffffff;
+}
+
+.language-select option:checked {
+  background: linear-gradient(135deg, #9333ea, #0891b2, #3b82f6);
+  color: var(--text-on-dark);
+  font-weight: 600;
 }
 
 .navbar-right {
   margin-left: auto;
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
 }
 
 .about-link {
@@ -172,7 +304,20 @@ body, html, #root, .app {
   text-decoration: underline;
 }
 
-/* Add these styles to your home-style.css file */
+.logout-link {
+  padding: 0.5rem 1rem;
+  background: linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08));
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+  transition: all 0.2s ease;
+}
+
+.logout-link:hover {
+  background: linear-gradient(90deg, rgba(255,255,255,0.2), rgba(255,255,255,0.12));
+  border-color: rgba(255,255,255,0.3);
+  opacity: 1;
+  text-decoration: none;
+}
 
 /* About page sections */
 .about-section {
@@ -229,29 +374,8 @@ body, html, #root, .app {
   transform: translateX(5px);
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .about-section {
-    width: 90%;
-    padding: 1.5rem;
-  }
-}
-
-
 /* Utility: muted text on light surfaces */
 .muted { color: var(--muted); }
-
-/* Small responsive tweaks */
-@media (min-width: 768px) {
-  .prompt-box, .feedback-box {
-    width: 420px;
-  }
-}
-
-/* Utility: muted text on light surfaces */
-.muted { color: var(--muted); }
-
-/* Add these styles to your home-style.css file */
 
 /* Transcription box that appears when recording */
 .transcription-box {
@@ -331,22 +455,27 @@ body, html, #root, .app {
   justify-content: center;
 }
 
-/* Mic button changes to red when recording */
-.mic-button.recording {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  animation: pulseButton 1.5s ease-in-out infinite;
+.analysis-btn {
+  margin-top: 1rem;
+  width: 100%;
 }
 
-@keyframes pulseButton {
-  0%, 100% {
-    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .about-section {
+    width: 90%;
+    padding: 1.5rem;
   }
-  50% {
-    box-shadow: 0 8px 30px rgba(239, 68, 68, 0.6);
+  
+  .mode-container {
+    flex-direction: column;
+    align-items: center;
   }
 }
 
-
-
-
-
+/* Small responsive tweaks */
+@media (min-width: 768px) {
+  .prompt-box, .feedback-box {
+    width: 420px;
+  }
+}
