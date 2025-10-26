@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useOpenRouter } from "../hooks/useOpenRouter";
 import { useWebSocketTranscription } from '../hooks/transcription';
 import "../css/home-style.css";
 
@@ -155,11 +154,11 @@ export default function Home() {
   const [isRecording, setIsRecording] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
-  const { sendMessage, loading, error } = useOpenRouter();
   const { 
     startTranscription,
     stopTranscription,
     clearTranscript,
+    getLatestTranscript,
     isConnected,
     transcript,
     interimTranscript,
@@ -227,6 +226,7 @@ export default function Home() {
       setRecordedText("");
       setFeedback("");
       clearTranscript();
+      sessionStorage.removeItem('feedback');
 
       const languageCode = getLanguageCode(language);
       await startTranscription(languageCode);
@@ -254,6 +254,7 @@ export default function Home() {
   const stopRecordingAndProcess = async () => {
     console.log('⏹️ Stopping recording...');
     
+    // Clear timers
     if (recordingTimerRef.current) {
       clearTimeout(recordingTimerRef.current);
     }
@@ -261,45 +262,31 @@ export default function Home() {
       clearInterval(countdownTimerRef.current);
     }
 
+    // Stop transcription (this now keeps WebSocket open briefly)
     stopTranscription();
     setIsRecording(false);
     setCountdown(0);
 
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // ✅ Wait longer for final transcripts to arrive
+    console.log('⏳ Waiting for final transcripts...');
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Increased to 2 seconds
 
-    const finalTranscript = transcript.trim();
+    // ✅ Get the latest transcript using the ref-based function
+    const finalTranscript = getLatestTranscript().trim();
+    
+    console.log('📝 Final recorded text:', finalTranscript);
+    console.log('   Transcript state:', transcript);
+    console.log('   From getLatest:', finalTranscript);
+
     setRecordedText(finalTranscript);
     
-    console.log('📝 Recorded text:', finalTranscript);
-
-    if (finalTranscript) {
-      try {
-        console.log('🤖 Getting AI feedback...');
-        const aiResponse = await sendMessage(
-          `You are a ${language} language teacher. 
-          
-          The student said: "${finalTranscript}"
-          Language: ${language}
-
-          Provide helpful feedback on:
-          1. Grammar (if any errors)
-          2. Clarity and fluency
-          3. One specific tip to improve
-
-          Keep it encouraging and concise!`
-        );
-        
-        console.log('✅ AI feedback received');
-        setFeedback(aiResponse);
-      } catch (err) {
-        console.error('Error getting feedback:', err);
-        setFeedback('Failed to get AI feedback. Please try again.');
-      }
-    } else {
-      setFeedback('No speech detected. Please try again and speak clearly.');
-    }
+    sessionStorage.removeItem('feedback');
+    sessionStorage.setItem('recordedText', finalTranscript);
+    sessionStorage.setItem('selectedLanguage', language);
+    sessionStorage.setItem('sentence', sentence);
+    sessionStorage.setItem('sessionTimestamp', Date.now().toString());
   };
-
+  
   useEffect(() => {
     return () => {
       if (recordingTimerRef.current) {
