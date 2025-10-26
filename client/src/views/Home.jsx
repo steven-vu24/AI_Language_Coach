@@ -2,9 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useOpenRouter } from "../hooks/useOpenRouter";
 import { useWebSocketTranscription } from '../hooks/transcription';
 import "../css/home-style.css";
-// import { useNavigate } from "react-router-dom"; // Keep this in your actual file
 
-//dummy examples for now
 const topics = {
   english: [
     "Describe your favorite meal.",
@@ -146,12 +144,6 @@ const pronunciationSentences = {
   ]
 };
 
-const placeholderText = {
-  english: "Speak now... Your transcription will appear here",
-  spanish: "Habla ahora... Tu transcripción aparecerá aquí",
-  japanese: "今話してください... 文字起こしがここに表示されます"
-};
-
 export default function Home() {
   const [language, setLanguage] = useState("english");
   const [topic, setTopic] = useState("");
@@ -220,115 +212,110 @@ export default function Home() {
   };
 
   const handleMicClick = async () => {
-      if (isRecording) {
+    if (isRecording) {
+      await stopRecordingAndProcess();
+    } else {
+      await startRecording();
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      console.log('🎤 Starting recording...');
+      setIsRecording(true);
+      setCountdown(RECORDING_DURATION);
+      setRecordedText("");
+      setFeedback("");
+      clearTranscript();
+
+      const languageCode = getLanguageCode(language);
+      await startTranscription(languageCode);
+
+      countdownTimerRef.current = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(countdownTimerRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      recordingTimerRef.current = setTimeout(async () => {
         await stopRecordingAndProcess();
-      } else {
-        await startRecording();
-      }
-    };
-  
-    const startRecording = async () => {
+      }, RECORDING_DURATION * 1000);
+
+    } catch (err) {
+      console.error('Error starting recording:', err);
+      setIsRecording(false);
+    }
+  };
+
+  const stopRecordingAndProcess = async () => {
+    console.log('⏹️ Stopping recording...');
+    
+    if (recordingTimerRef.current) {
+      clearTimeout(recordingTimerRef.current);
+    }
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+    }
+
+    stopTranscription();
+    setIsRecording(false);
+    setCountdown(0);
+
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const finalTranscript = transcript.trim();
+    setRecordedText(finalTranscript);
+    
+    console.log('📝 Recorded text:', finalTranscript);
+
+    if (finalTranscript) {
       try {
-        console.log('🎤 Starting recording...');
-        setIsRecording(true);
-        setCountdown(RECORDING_DURATION);
-        setRecordedText("");
-        setFeedback("");
-        clearTranscript();
-  
-        const languageCode = getLanguageCode(language);
-        await startTranscription(languageCode);
-  
-        // Start countdown
-        countdownTimerRef.current = setInterval(() => {
-          setCountdown(prev => {
-            if (prev <= 1) {
-              clearInterval(countdownTimerRef.current);
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-  
-        // Auto-stop after duration
-        recordingTimerRef.current = setTimeout(async () => {
-          await stopRecordingAndProcess();
-        }, RECORDING_DURATION * 1000);
-  
+        console.log('🤖 Getting AI feedback...');
+        const aiResponse = await sendMessage(
+          `You are a ${language} language teacher. 
+          
+          The student said: "${finalTranscript}"
+          Language: ${language}
+
+          Provide helpful feedback on:
+          1. Grammar (if any errors)
+          2. Clarity and fluency
+          3. One specific tip to improve
+
+          Keep it encouraging and concise!`
+        );
+        
+        console.log('✅ AI feedback received');
+        setFeedback(aiResponse);
       } catch (err) {
-        console.error('Error starting recording:', err);
-        setIsRecording(false);
+        console.error('Error getting feedback:', err);
+        setFeedback('Failed to get AI feedback. Please try again.');
       }
-    };
-  
-    const stopRecordingAndProcess = async () => {
-      console.log('⏹️ Stopping recording...');
-      
-      // Clear timers
+    } else {
+      setFeedback('No speech detected. Please try again and speak clearly.');
+    }
+  };
+
+  useEffect(() => {
+    return () => {
       if (recordingTimerRef.current) {
         clearTimeout(recordingTimerRef.current);
       }
       if (countdownTimerRef.current) {
         clearInterval(countdownTimerRef.current);
       }
-  
-      // Stop transcription
-      stopTranscription();
-      setIsRecording(false);
-      setCountdown(0);
-  
-      await new Promise(resolve => setTimeout(resolve, 500));
-  
-      const finalTranscript = transcript.trim();
-      setRecordedText(finalTranscript);
-      
-      console.log('📝 Recorded text:', finalTranscript);
-  
-      // Get AI feedback if we have text
-      if (finalTranscript) {
-        try {
-          console.log('🤖 Getting AI feedback...');
-          const aiResponse = await sendMessage(
-            `You are a ${language} language teacher. 
-            
-            The student said: "${finalTranscript}"
-            Language: ${language}
-  
-            Provide helpful feedback on:
-            1. Grammar (if any errors)
-            2. Clarity and fluency
-            3. One specific tip to improve
-  
-            Keep it encouraging and concise!`
-          );
-          
-          console.log('✅ AI feedback received');
-          setFeedback(aiResponse);
-        } catch (err) {
-          console.error('Error getting feedback:', err);
-          setFeedback('Failed to get AI feedback. Please try again.');
-        }
-      } else {
-        setFeedback('No speech detected. Please try again and speak clearly.');
+      if (isConnected) {
+        stopTranscription();
       }
     };
-  
-    useEffect(() => {
-      return () => {
-        if (recordingTimerRef.current) {
-          clearTimeout(recordingTimerRef.current);
-        }
-        if (countdownTimerRef.current) {
-          clearInterval(countdownTimerRef.current);
-        }
-        if (isConnected) {
-          stopTranscription();
-        }
-      };
-    }, []);
+  }, []);
 
   useEffect(() => {
-    generatePrompt(); // generate on first load
+    generatePrompt();
   }, [language]);
 
   const hasActiveMode = conversationMode || accentMode || fillerMode || pronunciationMode;
@@ -439,7 +426,7 @@ export default function Home() {
           </div>
         )}  
 
-        {!isRecording && (
+        {!isRecording && recordedText && (
           <>
             <div className="transcription-box final">
               <h3>📝 What You Said</h3>
@@ -449,7 +436,11 @@ export default function Home() {
             </div>
             <button 
               className="btn analysis-btn" 
-              onClick={() => window.location.href = '/analysis'}
+              onClick={() => {
+                sessionStorage.setItem('recordedText', recordedText);
+                sessionStorage.setItem('selectedLanguage', language);
+                window.location.href = '/analysis';
+              }}
             >
               📊 Learn More About Your Performance
             </button>

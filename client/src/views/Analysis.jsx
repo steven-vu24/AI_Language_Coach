@@ -1,21 +1,35 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../css/home-style.css";
-// import { useNavigate } from "react-router-dom"; // Keep this in your actual file
 
 export default function Analysis() {
   const [isPlayingUser, setIsPlayingUser] = useState(false);
   const [isPlayingPerfect, setIsPlayingPerfect] = useState(false);
+  const [recordedText, setRecordedText] = useState("");
+  const [language, setLanguage] = useState("english");
+
+  // Retrieve the recorded text from sessionStorage when component mounts
+  useEffect(() => {
+    const savedText = sessionStorage.getItem('recordedText');
+    const savedLanguage = sessionStorage.getItem('selectedLanguage');
+    
+    if (savedText) {
+      setRecordedText(savedText);
+    }
+    if (savedLanguage) {
+      setLanguage(savedLanguage);
+    }
+  }, []);
 
   const handlePlayUserAudio = () => {
     setIsPlayingUser(true);
     // TODO: Implement actual audio playback
-    setTimeout(() => setIsPlayingUser(false), 2000); // Simulate playback duration
+    setTimeout(() => setIsPlayingUser(false), 2000);
   };
 
   const handlePlayPerfectAudio = () => {
     setIsPlayingPerfect(true);
     // TODO: Implement actual audio playback
-    setTimeout(() => setIsPlayingPerfect(false), 2000); // Simulate playback duration
+    setTimeout(() => setIsPlayingPerfect(false), 2000);
   };
 
   return (
@@ -38,7 +52,7 @@ export default function Analysis() {
         <div className="prompt-box" style={{ width: '500px' }}>
           <h2>Your Phrase</h2>
           <p style={{ fontSize: '1.1rem', lineHeight: '1.6' }}>
-            "The quick brown fox jumps over the lazy dog."
+            {recordedText || "No recording found. Please record something first."}
           </p>
         </div>
 
@@ -57,7 +71,7 @@ export default function Analysis() {
           <button 
             className={`btn audio-btn ${isPlayingUser ? 'playing' : ''}`}
             onClick={handlePlayUserAudio}
-            disabled={isPlayingUser}
+            disabled={isPlayingUser || !recordedText}
           >
             {isPlayingUser ? '▶️ Playing...' : '🎤 Play Your Recording'}
           </button>
@@ -71,10 +85,11 @@ export default function Analysis() {
           </button>
         </div>
 
-        {/* Detailed Feedback (Optional for future) */}
+        {/* Detailed Feedback */}
         <div className="feedback-box" style={{ width: '500px', marginTop: '2rem' }}>
           <h2>Detailed Feedback</h2>
           <div style={{ textAlign: 'left', lineHeight: '1.8' }}>
+            <p><strong>Language:</strong> {language.charAt(0).toUpperCase() + language.slice(1)}</p>
             <p><strong>Strengths:</strong></p>
             <ul style={{ marginLeft: '1.5rem' }}>
               <li>Clear pronunciation of consonants</li>
