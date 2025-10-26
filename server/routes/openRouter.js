@@ -5,6 +5,7 @@ dotenv.config();
 
 const router = express.Router();
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const FISH_API_KEY = process.env.FISH_API_KEY;
 
 router.get("/test", (req, res) => {
   res.json({ 
