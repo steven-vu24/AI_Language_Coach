@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useOpenRouter } from "../hooks/useOpenRouter";
 import "../css/home-style.css";
 
@@ -10,38 +10,46 @@ export default function Analysis() {
   const [feedback, setFeedback] = useState("");
   const [sentence, setSentence] = useState("");
   const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
-  
+  const [audioUrl, setAudioUrl] = useState(null);
+
+  const audioRef = useRef(null);
   const { sendMessage, loading, error } = useOpenRouter();
 
-  // Retrieve data and generate feedback when component mounts
   useEffect(() => {
     const loadDataAndGenerateFeedback = async () => {
-      // Get saved data from sessionStorage
       const savedText = sessionStorage.getItem('recordedText');
       const savedLanguage = sessionStorage.getItem('selectedLanguage');
       const savedSentence = sessionStorage.getItem('sentence');
       const savedFeedback = sessionStorage.getItem('feedback');
+      const savedAudio = sessionStorage.getItem('audioRecording');
 
       console.log('📥 Loading session data:', {
         recordedText: savedText,
         language: savedLanguage,
         sentence: savedSentence,
-        hasFeedback: !!savedFeedback
+        hasFeedback: !!savedFeedback,
+        hasAudio: !!savedAudio,
+        audioSize: savedAudio ? savedAudio.length : 0
       });
 
-      // Set the retrieved data
       if (savedText) setRecordedText(savedText);
       if (savedLanguage) setLanguage(savedLanguage);
       if (savedSentence) setSentence(savedSentence);
 
-      // If feedback already exists, use it
+      if (savedAudio) {
+        setAudioUrl(savedAudio);
+        console.log('✅ Audio loaded from sessionStorage');
+        console.log('   Format:', savedAudio.substring(0, 30));
+      } else {
+        console.warn('⚠️ No audio found in sessionStorage');
+      }
+
       if (savedFeedback) {
         console.log('✅ Using cached feedback');
         setFeedback(savedFeedback);
         return;
       }
 
-      // If no saved feedback and we have recorded text, generate new feedback
       if (savedText && !savedFeedback) {
         console.log('🤖 Generating new AI feedback...');
         setIsLoadingFeedback(true);
@@ -50,22 +58,20 @@ export default function Analysis() {
           const aiResponse = await sendMessage(
             `You are a ${savedLanguage || 'english'} language teacher. 
             
-            The student said: "${savedText}"
-            Expected phrase: "${savedSentence || 'N/A'}"
-            Language: ${savedLanguage || 'english'}
+The student said: "${savedText}"
+Expected phrase: "${savedSentence || 'N/A'}"
+Language: ${savedLanguage || 'english'}
 
-            Provide helpful feedback on:
-            1. Grammar (if any errors)
-            2. Clarity and fluency
-            3. One specific tip to improve
+Provide helpful feedback on:
+1. Grammar (if any errors)
+2. Clarity and fluency
+3. One specific tip to improve
 
-            Keep it encouraging and concise!`
+Keep it encouraging and concise!`
           );
           
           console.log('✅ AI feedback received');
           setFeedback(aiResponse);
-          
-          // Save feedback to sessionStorage for future visits
           sessionStorage.setItem('feedback', aiResponse);
           
         } catch (err) {
@@ -77,28 +83,94 @@ export default function Analysis() {
           setIsLoadingFeedback(false);
         }
       } else if (!savedText) {
-        // No recorded text available
         const noDataMessage = 'No speech detected. Please record something first.';
         setFeedback(noDataMessage);
       }
     };
 
     loadDataAndGenerateFeedback();
-  }, []); // Empty dependency array - run once on mount
+  }, []); 
 
+  // ✅ FIXED: Play user audio
   const handlePlayUserAudio = () => {
+    console.log('🎵 Attempting to play audio...');
+    console.log('   audioUrl exists:', !!audioUrl);
+    console.log('   audioUrl type:', typeof audioUrl);
+    
+    if (!audioUrl) {
+      console.error('❌ No audio URL available');
+      alert('No audio recording available. Please record something first.');
+      return;
+    }
+
+    // ✅ Stop any currently playing audio
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current = null;
+    }
+
     setIsPlayingUser(true);
-    // TODO: Implement actual audio playback
-    setTimeout(() => setIsPlayingUser(false), 2000);
+
+    // ✅ Create new audio element
+    const audio = new Audio(audioUrl);
+    audioRef.current = audio;
+
+    // ✅ Set up event handlers
+    audio.onloadeddata = () => {
+      console.log('✅ Audio data loaded');
+      console.log('   Duration:', audio.duration, 'seconds');
+    };
+
+    audio.onended = () => {
+      console.log('✅ Playback finished');
+      setIsPlayingUser(false);
+    };
+
+    audio.onerror = (e) => {
+      console.error('❌ Audio playback error:', e);
+      console.error('   Error code:', audio.error?.code);
+      console.error('   Error message:', audio.error?.message);
+      setIsPlayingUser(false);
+      
+      let errorMsg = 'Error playing audio. ';
+      switch (audio.error?.code) {
+        case 1:
+          errorMsg += 'The audio loading was aborted.';
+          break;
+        case 2:
+          errorMsg += 'A network error occurred.';
+          break;
+        case 3:
+          errorMsg += 'The audio format is not supported.';
+          break;
+        case 4:
+          errorMsg += 'The audio source is not available.';
+          break;
+        default:
+          errorMsg += 'Unknown error occurred.';
+      }
+      alert(errorMsg);
+    };
+
+    // ✅ Play audio
+    audio.play()
+      .then(() => {
+        console.log('▶️ Playback started successfully');
+      })
+      .catch(err => {
+        console.error('❌ Play failed:', err);
+        setIsPlayingUser(false);
+        alert('Failed to play audio: ' + err.message);
+      });
   };
 
   const handlePlayPerfectAudio = () => {
     setIsPlayingPerfect(true);
-    // TODO: Implement actual audio playback
+    // TODO: Implement TTS for perfect pronunciation
     setTimeout(() => setIsPlayingPerfect(false), 2000);
   };
 
-  // Function to regenerate feedback
   const regenerateFeedback = async () => {
     if (!recordedText) {
       alert('No recording available to analyze');
@@ -135,6 +207,23 @@ Keep it encouraging and concise!`
     } finally {
       setIsLoadingFeedback(false);
     }
+  };
+
+  // ✅ Download audio function
+  const handleDownloadAudio = () => {
+    if (!audioUrl) {
+      alert('No audio available to download');
+      return;
+    }
+
+    console.log('💾 Downloading audio...');
+    const link = document.createElement('a');
+    link.href = audioUrl;
+    link.download = `recording-${language}-${Date.now()}.webm`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    console.log('✅ Download started');
   };
 
   return (

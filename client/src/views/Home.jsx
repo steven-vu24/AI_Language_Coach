@@ -162,8 +162,27 @@ export default function Home() {
     isConnected,
     transcript,
     interimTranscript,
+    audioBlob,
     error: transcriptionerror
   } = useWebSocketTranscription();
+
+  useEffect(() => {
+  if (audioBlob) {
+    console.log('💾 Detected new audioBlob, converting to base64...');
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64Audio = reader.result;
+      try {
+        sessionStorage.setItem('audioRecording', base64Audio);
+        console.log('✅ Saved audio to sessionStorage (length:', base64Audio.length, ')');
+      } catch (e) {
+        console.error('❌ Failed to save audio:', e);
+        alert('Audio file too large to save. Please try a shorter recording.');
+      }
+    };
+    reader.readAsDataURL(audioBlob);
+  }
+}, [audioBlob]);
 
   const recordingTimerRef = useRef(null);
   const countdownTimerRef = useRef(null);
@@ -227,6 +246,7 @@ export default function Home() {
       setFeedback("");
       clearTranscript();
       sessionStorage.removeItem('feedback');
+      sessionStorage.removeItem('audioRecording');
 
       const languageCode = getLanguageCode(language);
       await startTranscription(languageCode);
@@ -279,6 +299,33 @@ export default function Home() {
     console.log('   From getLatest:', finalTranscript);
 
     setRecordedText(finalTranscript);
+
+    if (audioBlob) {
+    console.log('💾 Converting audio to base64...');
+    console.log('   Blob size:', audioBlob.size, 'bytes');
+    console.log('   Blob type:', audioBlob.type);
+    
+    const reader = new FileReader();
+    
+    reader.onloadend = () => {
+      const base64Audio = reader.result;
+      console.log('✅ Audio converted, size:', base64Audio.length, 'chars');
+      
+      try {
+        sessionStorage.setItem('audioRecording', base64Audio);
+        sessionStorage.setItem('recordedText', finalTranscript);
+        sessionStorage.setItem('selectedLanguage', language);
+        sessionStorage.setItem('sentence', sentence);
+        sessionStorage.setItem('sessionTimestamp', Date.now().toString());
+        sessionStorage.removeItem('feedback');
+        console.log('✅ All session data saved successfully');
+      } catch (e) {
+        console.error('❌ Failed to save to sessionStorage:', e);
+        alert('Audio file too large to save. Please try a shorter recording.');
+      }
+    };
+    reader.readAsDataURL(audioBlob);
+    };
     
     sessionStorage.removeItem('feedback');
     sessionStorage.setItem('recordedText', finalTranscript);
