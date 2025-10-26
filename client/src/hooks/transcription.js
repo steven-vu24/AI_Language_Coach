@@ -12,14 +12,17 @@ export function useWebSocketTranscription() {
   const audioContextRef = useRef(null);
   const processorRef = useRef(null);
   const sourceRef = useRef(null);
+  const transcriptRef = useRef(''); // ✅ Track transcript in ref for immediate access
 
   const startTranscription = useCallback(async (language = 'en') => {
     try {
       console.log('🎤 Starting WebSocket transcription...');
       setError(null);
 
+      // ✅ Clear transcripts
       setTranscript('');
       setInterimTranscript('');
+      transcriptRef.current = ''; // ✅ Clear ref
 
       // Connect to WebSocket
       wsRef.current = new WebSocket(WS_URL);
@@ -48,7 +51,7 @@ export function useWebSocketTranscription() {
 
         // Create AudioContext for raw audio processing
         audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)({
-          sampleRate: 16000  // Match Deepgram's expected rate
+          sampleRate: 16000
         });
 
         console.log('🎙️ AudioContext created, sample rate:', audioContextRef.current.sampleRate);
@@ -104,7 +107,6 @@ export function useWebSocketTranscription() {
         const message = JSON.parse(event.data);
         
         if (message.type === 'transcript') {
-          
           const alternatives = message.data.channel?.alternatives?.[0];
           if (alternatives) {
             const newTranscript = alternatives.transcript || '';
@@ -114,8 +116,13 @@ export function useWebSocketTranscription() {
 
             if (newTranscript) {
               if (isFinal) {
-                setTranscript(prev => (prev + ' ' + newTranscript).trim());
+                // ✅ Update both state and ref
+                const updated = (transcriptRef.current + ' ' + newTranscript).trim();
+                transcriptRef.current = updated;
+                setTranscript(updated);
                 setInterimTranscript('');
+                
+                console.log('📝 Final transcript updated:', updated);
               } else {
                 setInterimTranscript(newTranscript);
               }
@@ -148,7 +155,7 @@ export function useWebSocketTranscription() {
   const stopTranscription = useCallback(() => {
     console.log('⏹️ Stopping transcription...');
 
-    // Disconnect audio processing
+    // ✅ Stop audio processing FIRST to stop sending new chunks
     if (processorRef.current) {
       processorRef.current.disconnect();
       processorRef.current = null;
@@ -165,18 +172,32 @@ export function useWebSocketTranscription() {
       audioContextRef.current = null;
     }
 
-    // Send stop command and close WebSocket
+    // ✅ Send stop command but KEEP WebSocket open briefly for final transcripts
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ type: 'stop' }));
-      wsRef.current.close();
+      
+      // ✅ Close WebSocket after a delay to receive final transcripts
+      setTimeout(() => {
+        if (wsRef.current) {
+          console.log('🔌 Closing WebSocket after delay');
+          wsRef.current.close();
+        }
+      }, 1000); // Wait 1 second for final transcripts
     }
 
     setIsConnected(false);
   }, []);
 
   const clearTranscript = useCallback(() => {
+    console.log('🗑️ Clearing transcripts');
     setTranscript('');
     setInterimTranscript('');
+    transcriptRef.current = ''; // ✅ Clear ref too
+  }, []);
+
+  // ✅ Add function to get the latest transcript immediately
+  const getLatestTranscript = useCallback(() => {
+    return transcriptRef.current;
   }, []);
 
   useEffect(() => {
@@ -191,6 +212,7 @@ export function useWebSocketTranscription() {
     startTranscription,
     stopTranscription,
     clearTranscript,
+    getLatestTranscript, // ✅ Export this
     isConnected,
     transcript,
     interimTranscript,
