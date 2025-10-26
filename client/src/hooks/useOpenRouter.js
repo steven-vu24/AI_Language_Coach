@@ -6,7 +6,7 @@ export function useOpenRouter() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const sendMessage = async (message, model = 'meta-llama/llama-3.2-3b-instruct:free') => {
+  const sendMessage = async (message, model = 'openai/gpt-5-chat') => {
     setLoading(true);
     setError(null);
 

@@ -50,7 +50,7 @@ export default function Analysis() {
       return;
     }
 
-         if (savedText && !savedFeedback) {
+      if (savedText && !savedFeedback) {
         console.log('🤖 Generating new AI feedback...');
         setIsLoadingFeedback(true);
 
@@ -261,7 +261,7 @@ export default function Analysis() {
         `You are a ${language} language teacher. 
         
         The student said: "${recordedText}"
-        Expected phrase: "${sentence || 'N/A'}"
+        Expected phrase: "${sentence}"
         Language: ${language}
 
         Provide helpful feedback on:
