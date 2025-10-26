@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useOpenRouter } from "../hooks/useOpenRouter";
+import { useWebSocketTranscription } from '../hooks/transcription';
 import "../css/home-style.css";
 // import { useNavigate } from "react-router-dom"; // Keep this in your actual file
 
@@ -55,8 +57,26 @@ export default function Home() {
   const [language, setLanguage] = useState("english");
   const [topic, setTopic] = useState("");
   const [sentence, setSentence] = useState("");
+  const [feedback, setFeedback] = useState("");
+  const [recordedText, setRecordedText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
-  const [transcription, setTranscription] = useState("");
+  const [countdown, setCountdown] = useState(0);
+
+  const { sendMessage, loading, error } = useOpenRouter();
+  const { 
+    startTranscription,
+    stopTranscription,
+    clearTranscript,
+    isConnected,
+    transcript,
+    interimTranscript,
+    error: transcriptionerror
+  } = useWebSocketTranscription();
+
+  const recordingTimerRef = useRef(null);
+  const countdownTimerRef = useRef(null);
+
+  const RECORDING_DURATION = 1000;
 
   function getRandomPrompt(language) {
     const list = topics[language] || topics.english;
@@ -73,12 +93,122 @@ export default function Home() {
     setSentence(getRandomSentence(language));
   };
 
-  const toggleRecording = () => {
-    setIsRecording(!isRecording);
-    if (!isRecording) {
-      setTranscription(""); // Clear previous transcription when starting new recording
-    }
+  const getLanguageCode = (lang) => {
+    const codes = {
+      english: 'en',
+      spanish: 'es',
+      japanese: 'ja'
+    };
+    return codes[lang] || 'en';
   };
+
+  const handleMicClick = async () => {
+      if (isRecording) {
+        await stopRecordingAndProcess();
+      } else {
+        await startRecording();
+      }
+    };
+  
+    const startRecording = async () => {
+      try {
+        console.log('🎤 Starting recording...');
+        setIsRecording(true);
+        setCountdown(RECORDING_DURATION);
+        setRecordedText("");
+        setFeedback("");
+        clearTranscript();
+  
+        const languageCode = getLanguageCode(language);
+        await startTranscription(languageCode);
+  
+        // Start countdown
+        countdownTimerRef.current = setInterval(() => {
+          setCountdown(prev => {
+            if (prev <= 1) {
+              clearInterval(countdownTimerRef.current);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+  
+        // Auto-stop after duration
+        recordingTimerRef.current = setTimeout(async () => {
+          await stopRecordingAndProcess();
+        }, RECORDING_DURATION * 1000);
+  
+      } catch (err) {
+        console.error('Error starting recording:', err);
+        setIsRecording(false);
+      }
+    };
+  
+    const stopRecordingAndProcess = async () => {
+      console.log('⏹️ Stopping recording...');
+      
+      // Clear timers
+      if (recordingTimerRef.current) {
+        clearTimeout(recordingTimerRef.current);
+      }
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+      }
+  
+      // Stop transcription
+      stopTranscription();
+      setIsRecording(false);
+      setCountdown(0);
+  
+      await new Promise(resolve => setTimeout(resolve, 500));
+  
+      const finalTranscript = transcript.trim();
+      setRecordedText(finalTranscript);
+      
+      console.log('📝 Recorded text:', finalTranscript);
+  
+      // Get AI feedback if we have text
+      if (finalTranscript) {
+        try {
+          console.log('🤖 Getting AI feedback...');
+          const aiResponse = await sendMessage(
+            `You are a ${language} language teacher. 
+            
+            The student said: "${finalTranscript}"
+            Language: ${language}
+  
+            Provide helpful feedback on:
+            1. Grammar (if any errors)
+            2. Clarity and fluency
+            3. One specific tip to improve
+  
+            Keep it encouraging and concise!`
+          );
+          
+          console.log('✅ AI feedback received');
+          setFeedback(aiResponse);
+        } catch (err) {
+          console.error('Error getting feedback:', err);
+          setFeedback('Failed to get AI feedback. Please try again.');
+        }
+      } else {
+        setFeedback('No speech detected. Please try again and speak clearly.');
+      }
+    };
+  
+    useEffect(() => {
+      return () => {
+        if (recordingTimerRef.current) {
+          clearTimeout(recordingTimerRef.current);
+        }
+        if (countdownTimerRef.current) {
+          clearInterval(countdownTimerRef.current);
+        }
+        if (isConnected) {
+          stopTranscription();
+        }
+      };
+    }, []);
 
   useEffect(() => {
     generatePrompt(); // generate on first load
@@ -122,20 +252,34 @@ export default function Home() {
 
         <button 
           className={`mic-button ${isRecording ? 'recording' : ''}`}
-          onClick={toggleRecording}
+          onClick={handleMicClick}
           title={isRecording ? "Stop recording" : "Start recording"}
         >
           {isRecording ? '⏹️' : '🎤'}
         </button>
 
         {isRecording && (
-          <div className="transcription-box">
+          <div className="transcription-box live">
             <h3>
               <span className="recording-indicator"></span>
-              Recording...
+              Live Transcript
             </h3>
-            <div className={`transcription-text ${!transcription ? 'empty' : ''}`}>
-              {transcription || placeholderText[language]}
+            <div className="transcription-text">
+              <span className="final-text">{transcript}</span>
+              {interimTranscript && (
+                <span className="interim-text"> {interimTranscript}</span>
+              )}
+            </div>
+          </div>
+        )}  
+
+        {recordedText && !isRecording && (
+          <>
+            <div className="transcription-box final">
+              <h3>📝 What You Said</h3>
+              <div className="transcription-text">
+                "{recordedText}"
+              </div>
             </div>
             <button 
               className="btn analysis-btn" 
@@ -143,7 +287,7 @@ export default function Home() {
             >
               📊 Learn More About Your Performance
             </button>
-          </div>
+          </>
         )}
       </main>
     </div>

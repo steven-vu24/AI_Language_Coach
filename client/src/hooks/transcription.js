@@ -18,6 +18,9 @@ export function useWebSocketTranscription() {
       console.log('🎤 Starting WebSocket transcription...');
       setError(null);
 
+      setTranscript('');
+      setInterimTranscript('');
+
       // Connect to WebSocket
       wsRef.current = new WebSocket(WS_URL);
 
