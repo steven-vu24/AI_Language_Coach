@@ -7,22 +7,28 @@ export function useWebSocketTranscription() {
   const [transcript, setTranscript] = useState('');
   const [interimTranscript, setInterimTranscript] = useState('');
   const [error, setError] = useState(null);
+  const [audioBlob, setAudioBlob] = useState(null);
 
   const wsRef = useRef(null);
   const audioContextRef = useRef(null);
   const processorRef = useRef(null);
   const sourceRef = useRef(null);
-  const transcriptRef = useRef(''); // ✅ Track transcript in ref for immediate access
+  const transcriptRef = useRef('');
+
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
 
   const startTranscription = useCallback(async (language = 'en') => {
     try {
       console.log('🎤 Starting WebSocket transcription...');
       setError(null);
 
-      // ✅ Clear transcripts
       setTranscript('');
       setInterimTranscript('');
-      transcriptRef.current = ''; // ✅ Clear ref
+      transcriptRef.current = '';
+
+      setAudioBlob(null);
+      audioChunksRef.current = [];
 
       // Connect to WebSocket
       wsRef.current = new WebSocket(WS_URL);
@@ -48,6 +54,27 @@ export function useWebSocketTranscription() {
           }
         });
         console.log('✅ Microphone granted');
+
+        const mimeType = MediaRecorder.isTypeSupported('audio/webm') 
+          ? 'audio/webm' 
+          : 'audio/mp4';
+        mediaRecorderRef.current = new MediaRecorder(stream, { mimeType });
+        mediaRecorderRef.current.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunksRef.current.push(event.data);
+            console.log('🎵 Audio chunk recorded:', event.data.size);
+          }
+        };
+
+        mediaRecorderRef.current.onstop = () => {
+          console.log('🎵 Creating audio blob from chunks...');
+          const blob = new Blob(audioChunksRef.current, { type: mimeType });
+          setAudioBlob(blob);
+          console.log('✅ Audio blob created:', blob.size, 'bytes');
+        };
+
+        mediaRecorderRef.current.start(100); 
+        console.log('🎙️ MediaRecorder started');
 
         // Create AudioContext for raw audio processing
         audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)({
@@ -155,7 +182,11 @@ export function useWebSocketTranscription() {
   const stopTranscription = useCallback(() => {
     console.log('⏹️ Stopping transcription...');
 
-    // ✅ Stop audio processing FIRST to stop sending new chunks
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      console.log('🛑 Stopping MediaRecorder...');
+      mediaRecorderRef.current.stop();
+    }
+
     if (processorRef.current) {
       processorRef.current.disconnect();
       processorRef.current = null;
@@ -212,10 +243,11 @@ export function useWebSocketTranscription() {
     startTranscription,
     stopTranscription,
     clearTranscript,
-    getLatestTranscript, // ✅ Export this
+    getLatestTranscript,
     isConnected,
     transcript,
     interimTranscript,
+    audioBlob,
     error,
   };
 }
