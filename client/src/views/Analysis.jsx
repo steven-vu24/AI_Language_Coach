@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useOpenRouter } from "../hooks/useOpenRouter";
 import "../css/home-style.css";
 
@@ -11,6 +11,7 @@ export default function Analysis() {
     const [sentence, setSentence] = useState("");
     const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
     const [audioUrl, setAudioUrl] = useState(null);
+    const audioRef = useRef(null);
   
     const [selectedVoice, setSelectedVoice] = useState("voice1"); // 🔹 NEW
     const { sendMessage, loading, error } = useOpenRouter();
@@ -119,9 +120,77 @@ export default function Analysis() {
     }
   }, []);
 
-  const handlePlayUserAudio = () => {
+    const handlePlayUserAudio = () => {
+    console.log('🎵 Attempting to play audio...');
+    console.log('   audioUrl exists:', !!audioUrl);
+    console.log('   audioUrl type:', typeof audioUrl);
+    
+    if (!audioUrl) {
+      console.error('❌ No audio URL available');
+      alert('No audio recording available. Please record something first.');
+      return;
+    }
+
+    // ✅ Stop any currently playing audio
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current = null;
+    }
+
     setIsPlayingUser(true);
-    setTimeout(() => setIsPlayingUser(false), 2000);
+
+    // ✅ Create new audio element
+    const audio = new Audio(audioUrl);
+    audioRef.current = audio;
+
+    // ✅ Set up event handlers
+    audio.onloadeddata = () => {
+      console.log('✅ Audio data loaded');
+      console.log('   Duration:', audio.duration, 'seconds');
+    };
+
+    audio.onended = () => {
+      console.log('✅ Playback finished');
+      setIsPlayingUser(false);
+    };
+
+    audio.onerror = (e) => {
+      console.error('❌ Audio playback error:', e);
+      console.error('   Error code:', audio.error?.code);
+      console.error('   Error message:', audio.error?.message);
+      setIsPlayingUser(false);
+      
+      let errorMsg = 'Error playing audio. ';
+      switch (audio.error?.code) {
+        case 1:
+          errorMsg += 'The audio loading was aborted.';
+          break;
+        case 2:
+          errorMsg += 'A network error occurred.';
+          break;
+        case 3:
+          errorMsg += 'The audio format is not supported.';
+          break;
+        case 4:
+          errorMsg += 'The audio source is not available.';
+          break;
+        default:
+          errorMsg += 'Unknown error occurred.';
+      }
+      alert(errorMsg);
+    };
+
+    // ✅ Play audio
+    audio.play()
+      .then(() => {
+        console.log('▶️ Playback started successfully');
+      })
+      .catch(err => {
+        console.error('❌ Play failed:', err);
+        setIsPlayingUser(false);
+        alert('Failed to play audio: ' + err.message);
+      });
   };
 
   const handlePlayPerfectAudio = async () => {
