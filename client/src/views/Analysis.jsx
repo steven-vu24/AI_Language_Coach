@@ -16,41 +16,41 @@ export default function Analysis() {
   const { sendMessage, loading, error } = useOpenRouter();
 
   useEffect(() => {
-    const loadDataAndGenerateFeedback = async () => {
-      const savedText = sessionStorage.getItem('recordedText');
-      const savedLanguage = sessionStorage.getItem('selectedLanguage');
-      const savedSentence = sessionStorage.getItem('sentence');
-      const savedFeedback = sessionStorage.getItem('feedback');
-      const savedAudio = sessionStorage.getItem('audioRecording');
+  const loadDataAndGenerateFeedback = async () => {
+    const savedText = sessionStorage.getItem('recordedText');
+    const savedLanguage = sessionStorage.getItem('selectedLanguage');
+    const savedSentence = sessionStorage.getItem('sentence');
+    const savedFeedback = sessionStorage.getItem('feedback');
+    const savedAudio = sessionStorage.getItem('audioRecording');
 
-      console.log('📥 Loading session data:', {
-        recordedText: savedText,
-        language: savedLanguage,
-        sentence: savedSentence,
-        hasFeedback: !!savedFeedback,
-        hasAudio: !!savedAudio,
-        audioSize: savedAudio ? savedAudio.length : 0
-      });
+    console.log('📥 Loading session data:', {
+      recordedText: savedText,
+      language: savedLanguage,
+      sentence: savedSentence,
+      hasFeedback: !!savedFeedback,
+      hasAudio: !!savedAudio,
+      audioSize: savedAudio ? savedAudio.length : 0
+    });
 
-      if (savedText) setRecordedText(savedText);
-      if (savedLanguage) setLanguage(savedLanguage);
-      if (savedSentence) setSentence(savedSentence);
+    if (savedText) setRecordedText(savedText);
+    if (savedLanguage) setLanguage(savedLanguage);
+    if (savedSentence) setSentence(savedSentence);
 
-      if (savedAudio) {
-        setAudioUrl(savedAudio);
-        console.log('✅ Audio loaded from sessionStorage');
-        console.log('   Format:', savedAudio.substring(0, 30));
-      } else {
-        console.warn('⚠️ No audio found in sessionStorage');
-      }
+    if (savedAudio) {
+      setAudioUrl(savedAudio);
+      console.log('✅ Audio loaded from sessionStorage');
+      console.log('   Format:', savedAudio.substring(0, 30));
+    } else {
+      console.warn('⚠️ No audio found in sessionStorage');
+    }
 
-      if (savedFeedback) {
-        console.log('✅ Using cached feedback');
-        setFeedback(savedFeedback);
-        return;
-      }
+    if (savedFeedback) {
+      console.log('✅ Using cached feedback');
+      setFeedback(savedFeedback);
+      return;
+    }
 
-      if (savedText && !savedFeedback) {
+         if (savedText && !savedFeedback) {
         console.log('🤖 Generating new AI feedback...');
         setIsLoadingFeedback(true);
 
@@ -58,16 +58,16 @@ export default function Analysis() {
           const aiResponse = await sendMessage(
             `You are a ${savedLanguage || 'english'} language teacher. 
             
-The student said: "${savedText}"
-Expected phrase: "${savedSentence || 'N/A'}"
-Language: ${savedLanguage || 'english'}
+            The student said: "${savedText}"
+            Expected phrase: "${savedSentence || 'N/A'}"
+            Language: ${savedLanguage || 'english'}
 
-Provide helpful feedback on:
-1. Grammar (if any errors)
-2. Clarity and fluency
-3. One specific tip to improve
+            Provide helpful feedback on:
+            1. Grammar (if any errors)
+            2. Clarity and fluency
+            3. One specific tip to improve
 
-Keep it encouraging and concise!`
+            Keep it encouraging and concise!`
           );
           
           console.log('✅ AI feedback received');
@@ -90,6 +90,19 @@ Keep it encouraging and concise!`
 
     loadDataAndGenerateFeedback();
   }, []); 
+
+  // Retrieve the recorded text from sessionStorage when component mounts
+  useEffect(() => {
+    const savedText = sessionStorage.getItem('recordedText');
+    const savedLanguage = sessionStorage.getItem('selectedLanguage');
+    
+    if (savedText) {
+      setRecordedText(savedText);
+    }
+    if (savedLanguage) {
+      setLanguage(savedLanguage);
+    }
+  }, []);
 
   // Retrieve the recorded text from sessionStorage when component mounts
   useEffect(() => {
@@ -233,7 +246,6 @@ Keep it encouraging and concise!`
     }
   };
 
-
   const regenerateFeedback = async () => {
     if (!recordedText) {
       alert('No recording available to analyze');
@@ -248,16 +260,16 @@ Keep it encouraging and concise!`
       const aiResponse = await sendMessage(
         `You are a ${language} language teacher. 
         
-  The student said: "${recordedText}"
-  Expected phrase: "${sentence || 'N/A'}"
-  Language: ${language}
+        The student said: "${recordedText}"
+        Expected phrase: "${sentence || 'N/A'}"
+        Language: ${language}
 
-  Provide helpful feedback on:
-  1. Grammar (if any errors)
-  2. Clarity and fluency
-  3. One specific tip to improve
+        Provide helpful feedback on:
+        1. Grammar (if any errors)
+        2. Clarity and fluency
+        3. One specific tip to improve
 
-  Keep it encouraging and concise!`
+        Keep it encouraging and concise!`
       );
       
       console.log('✅ New feedback received');

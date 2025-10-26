@@ -20,7 +20,6 @@ router.get("/test", (req, res) => {
   });
 });
 
-
 router.post("/chat", async (req, res) => {
   try {
     const { message, model = 'meta-llama/llama-3.2-3b-instruct:free' } = req.body;
