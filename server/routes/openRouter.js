@@ -55,4 +55,46 @@ router.post("/chat", async (req, res) => {
   }
 });
 
+router.post('/generate-tts', async (req, res) => {
+  const { text, language } = req.body;
+  
+  if (!text) {
+    return res.status(400).json({ error: "Text is required" });
+  }
+
+  if (!FISH_API_KEY) {
+    return res.status(500).json({ error: "FISH_API_KEY not configured" });
+  }
+  
+  try {
+    const response = await fetch('https://api.fish.audio/v1/tts', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${FISH_API_KEY}`,
+        'Content-Type': 'application/json',
+        'model': 's1'
+      },
+      body: JSON.stringify({
+        text: text,
+        format: 'mp3',
+        reference_id: '5196af35f6ff4a0dbf541793fc9f2157',  
+
+      })
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Fish Audio API Error:', errorText);
+      return res.status(response.status).json({ error: 'Fish Audio API failed' });
+    }
+    
+    const audioBuffer = await response.arrayBuffer();
+    res.set('Content-Type', 'audio/mpeg');
+    res.send(Buffer.from(audioBuffer));
+  } catch (error) {
+    console.error('TTS generation error:', error);
+    res.status(500).json({ error: 'TTS generation failed' });
+  }
+});
+
 export default router;

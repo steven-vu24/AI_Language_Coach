@@ -91,6 +91,19 @@ Keep it encouraging and concise!`
     loadDataAndGenerateFeedback();
   }, []); 
 
+  // Retrieve the recorded text from sessionStorage when component mounts
+  useEffect(() => {
+    const savedText = sessionStorage.getItem('recordedText');
+    const savedLanguage = sessionStorage.getItem('selectedLanguage');
+    
+    if (savedText) {
+      setRecordedText(savedText);
+    }
+    if (savedLanguage) {
+      setLanguage(savedLanguage);
+    }
+  }, []);
+
   // ✅ FIXED: Play user audio
   const handlePlayUserAudio = () => {
     console.log('🎵 Attempting to play audio...');
@@ -166,46 +179,57 @@ Keep it encouraging and concise!`
   };
 
   const handlePlayPerfectAudio = async () => {
+    if (!recordedText) return;
+    
     setIsPlayingPerfect(true);
+    
     try {
-      console.log('🎵 Generating TTS for:', sentence || recordedText);
-
+      console.log('🎵 Generating TTS for:', recordedText);
+      
+      // Call backend to generate TTS - UPDATED URL
       const response = await fetch('http://localhost:5001/api/openrouter/generate-tts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          text: sentence || recordedText,
+          text: recordedText,
           language: language
         })
       });
-
+      
+      console.log('Response status:', response.status);
+      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'TTS generation failed');
       }
-
+      
+      // Get audio blob and create URL
       const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
-
-      console.log('✅ Playing TTS audio...');
+      
+      console.log('✅ Playing audio...');
+      
       audio.onended = () => {
+        console.log('Audio finished playing');
         setIsPlayingPerfect(false);
         URL.revokeObjectURL(audioUrl);
       };
-
+      
       audio.onerror = (e) => {
-        console.error('TTS playback error:', e);
+        console.error('Audio playback error:', e);
         setIsPlayingPerfect(false);
-        alert('Failed to play pronunciation audio');
+        alert('Failed to play audio');
       };
-
+      
       await audio.play();
-
+      
     } catch (error) {
-      console.error('❌ Error generating TTS:', error);
-      alert(`Failed to generate pronunciation: ${error.message}`);
+      console.error('Error with perfect audio:', error);
       setIsPlayingPerfect(false);
+      alert(`Failed to generate pronunciation: ${error.message}`);
     }
   };
 
