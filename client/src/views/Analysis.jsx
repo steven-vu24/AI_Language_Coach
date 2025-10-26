@@ -316,16 +316,6 @@ export default function Analysis() {
           </p>
         </div>
 
-        {/* Accuracy Score */}
-        <div className="accuracy-box">
-          <h2>Accuracy Score</h2>
-          <div className="score-circle">
-            <span className="score-number">67</span>
-            <span className="score-percent">%</span>
-          </div>
-          <p className="score-label">Great job! Keep practicing!</p>
-        </div>
-
         {/* 🔹 Voice Selection Dropdown (Themed) */}
         <div className="voice-select-container">
           <label htmlFor="voiceSelect" className="voice-label">
